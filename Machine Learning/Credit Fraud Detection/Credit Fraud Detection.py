@@ -4,56 +4,57 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
 
-#loading dataset to a pandas Dataframe
+# Load the dataset into a pandas DataFrame
 credit_card_data = pd.read_csv('creditcard.csv')
 
-#data will have to be taken from the following website:  https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
+# Link to dataset: https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
 
-#check for missing values
-credit_card_data.isnull().sum()
+# Check for any missing values in the dataset
+missing_values = credit_card_data.isnull().sum()
+if missing_values.any():
+    print("Missing values detected:", missing_values)
 
-#distribution for legit and fraudulent transactions
-credit_card_data['Class'].value_counts()
+# Display distribution of legitimate and fraudulent transactions
+print(credit_card_data['Class'].value_counts())
 
+# Filter out legit and fraud transactions for separate analysis
 legit = credit_card_data[credit_card_data.Class == 0]
 fraud = credit_card_data[credit_card_data.Class == 1]
 
-#statistical measures of the data
-legit.Amount.describe()
-fraud.Amount.describe()
+# Display statistical measures of the transaction amounts for both classes
+print("Legit Transactions Summary:\n", legit.Amount.describe())
+print("\nFraud Transactions Summary:\n", fraud.Amount.describe())
 
-#compare the values for both transactions
-credit_card_data.groupby('Class').mean()
+# Compare mean values across all columns for both classes
+print("\nMean Values by Class:\n", credit_card_data.groupby('Class').mean())
 
-#bootstrapping 492 values
+# Bootstrap (sample) 492 values from the legitimate transactions for balanced dataset creation
 legit_sample = legit.sample(n=492)
 
-#making a new dataset with bootstrapped legit values
+# Combine bootstrapped legit values with original fraud values to get a balanced dataset
 new_data = pd.concat([legit_sample, fraud], axis=0)
 
-#data is now normally distributed
-new_data['Class'].value_counts()
+# Confirm that the data is now balanced
+print("\nBalanced Class Distribution:\n", new_data['Class'].value_counts())
+print("\nMean Values in Balanced Dataset by Class:\n", new_data.groupby('Class').mean())
 
-new_data.groupby('Class').mean()
-
+# Separate features (X) from target variable (Y)
 X = new_data.drop(columns='Class', axis=1)
 Y = new_data['Class']
 
-#split data to training and testing set
+# Split the balanced dataset into training and testing sets, ensuring both have a similar ratio of legit and fraud instances
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.2, stratify=Y, random_state=2)
 
-#creating logistic regression model
-model = LogisticRegression()
-
+# Initialize and train a logistic regression model
+model = LogisticRegression(max_iter=1000)  # Increased max_iter for better convergence
 model.fit(X_train, Y_train)
 
-#evaluating model with training data
+# Evaluate model's accuracy on the training data
 X_train_predict = model.predict(X_train)
 training_data_accuracy = accuracy_score(X_train_predict, Y_train)
-print("Training Data Accuracy:", training_data_accuracy)
+print("\nTraining Data Accuracy:", training_data_accuracy)
 
-#evaluating model with testing data
+# Evaluate model's accuracy on the testing data
 X_test_predict = model.predict(X_test)
 testing_data_accuracy = accuracy_score(X_test_predict, Y_test)
-
 print("Testing Data Accuracy:", testing_data_accuracy)
